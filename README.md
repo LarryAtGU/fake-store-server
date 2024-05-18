@@ -42,7 +42,19 @@ The purpose of this server is to provide MAD course students with a real-world e
    npm start
    ```
 
-The server will start running on `http://localhost:3000/`. Adjust the port in the configuration if necessary.
+   The server will start running on `http://localhost:3000/`. Adjust the port in the configuration if necessary.
+
+5. **(Optional) Change the Server Port**
+
+    1. Make a copy of the `example.env` file in the project's root directory and rename it to `.env`.
+    2. Set the `PORT` environment variable value to the desired port.
+
+    e.g.
+    `.env`:
+
+    ```env
+    PORT=3001
+    ```
 
 ## Features
 
