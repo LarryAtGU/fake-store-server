@@ -1,109 +1,142 @@
-const sql = require("sqlite3").verbose();
-const util = require("util");
-const fileName = "./fake-store.sqlite3";
+// db.js — switched from sqlite3 to better-sqlite3
+const Database = require('better-sqlite3');
 
+// Path to your SQLite file
+const fileName = './fake-store.sqlite3';
+
+// Synchronous open (creates file if missing)
 const createDataBase = (fname) => {
-  return new sql.Database(fname, sql.OPEN_READWRITE | sql.OPEN_CREATE, (err) =>
-    err
-      ? console.error(err.message)
-      : console.log(`Connected to database through ${fname}`)
-  );
+  const db = new Database(fname);
+  console.log(`Connected to database through ${fname}`);
+  return db;
 };
 
 const db = createDataBase(fileName);
 
-const dbRun = (query, paras = []) => {
+// Run a query (INSERT/UPDATE/DELETE) and return lastID/changes
+const dbRun = (query, params = []) => {
   return new Promise((res, rej) => {
-    db.run(query, paras, function (err) {
-      // can't use array function here.
-      if (err) rej(err);
-      else res({ lastID: this.lastID, changes: this.changes });
-    });
+    try {
+      const stmt = db.prepare(query);
+      const info = stmt.run(params);
+      // Map better-sqlite3's lastInsertRowid to lastID
+      res({ lastID: info.lastInsertRowid, changes: info.changes });
+    } catch (err) {
+      rej(err);
+    }
   });
 };
 
-const dbAll = util.promisify(db.all.bind(db));
-const dbGet = util.promisify(db.get.bind(db));
-const dbClose = util.promisify(db.close.bind(db));
+// Fetch all rows
+const dbAll = (query, params = []) => {
+  return new Promise((res, rej) => {
+    try {
+      const stmt = db.prepare(query);
+      const rows = stmt.all(params);
+      res(rows);
+    } catch (err) {
+      rej(err);
+    }
+  });
+};
+
+// Fetch a single row
+const dbGet = (query, params = {}) => {
+  console.log("in dbGet query, params",query,params)
+  return new Promise((res, rej) => {
+    try {
+      const stmt = db.prepare(query);
+      const row = stmt.get(params);
+      res(row);
+    } catch (err) {
+      rej(err);
+    }
+  });
+};
+
+// Close database
+const dbClose = () => {
+  return new Promise((res) => {
+    db.close();
+    res();
+  });
+};
+
+// Test function
 const dbTest = async () => {
-  const createTable = `create table if not exists test (id integer primary key autoincrement,name text not null)`;
-  const insertRecord = `insert into test (name) values (?)`;
-  const updateRecord = `update test set name = $name where id = $id`;
-  const selectAll = `select * from test`;
-  const seletcOne = `select * from test where id = $id`;
-  const deleteAll = `delete from test`;
+  const createTable      = `CREATE TABLE IF NOT EXISTS test (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT    NOT NULL
+  )`;
+  const insertRecord     = `INSERT INTO test (name) VALUES (?)`;
+  const updateRecord     = `UPDATE test SET name = $name WHERE id = $id`;
+  const selectAll        = `SELECT * FROM test`;
+  const selectOne        = `SELECT * FROM test WHERE id = $id`;
+  const deleteAll        = `DELETE FROM test`;
+
   try {
-    const createRes = await dbRun(createTable);
-    console.log("createRes", createRes);
-    const insertRes = await dbRun(insertRecord, ["testName"]);
-    console.log("insertRes:", insertRes);
-    const allRes = await dbAll(selectAll);
-    console.table(allRes);
-    const myId = insertRes.lastID;
-    const updateRes = await dbRun(updateRecord, {
-      $id: myId,
-      $name: "new name",
-    });
-    console.log("updateRes:", updateRes);
+    console.log('createRes', await dbRun(createTable));
+    console.log('insertRes:', await dbRun(insertRecord, ['testName']));
     console.table(await dbAll(selectAll));
-    console.log(await dbGet(seletcOne, { $id: myId }));
-    console.log(await dbRun(deleteAll));
+
+    const myId = (await dbRun(insertRecord, ['another'])).lastID;
+    console.log('updateRes:', await dbRun(updateRecord, { $id: myId, $name: 'new name' }));
+    console.table(await dbAll(selectAll));
+
+    console.log(await dbGet(selectOne, { $id: myId }));
+    console.log('deleted:', await dbRun(deleteAll));
     await dbClose();
   } catch (e) {
     console.error(e);
   }
 };
 
+// Table-creation helpers
 const createUsersTable = async () => {
-  const createTableSql = `create table if not exists users 
-  (id integer primary key autoincrement,
-    name text not null,
-    email text not null unique,
-    password text not null)`;
+  const sql = `CREATE TABLE IF NOT EXISTS users (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    name     TEXT    NOT NULL,
+    email    TEXT    NOT NULL UNIQUE,
+    password TEXT    NOT NULL
+  )`;
   try {
-    await dbRun(createTableSql);
+    await dbRun(sql);
     return true;
   } catch (e) {
-    console.error(`Error in createUserTable: ${e}.`);
+    console.error(`Error in createUsersTable: ${e}`);
     return false;
   }
 };
 
 const createOrdersTable = async () => {
-  // total price in cents
-  const createTableSql = `
-  CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    uid INTEGER NOT NULL,
+  const sql = `CREATE TABLE IF NOT EXISTS orders (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    uid          INTEGER NOT NULL,
     item_numbers INTEGER NOT NULL,
-    is_paid INTEGER NOT NULL CHECK (is_paid IN (0, 1)),
-    is_delivered INTEGER NOT NULL CHECK (is_delivered IN (0, 1)),
-    total_price INTEGER NOT NULL,
-    order_items TEXT NOT NULL
+    is_paid      INTEGER NOT NULL CHECK (is_paid IN (0,1)),
+    is_delivered INTEGER NOT NULL CHECK (is_delivered IN (0,1)),
+    total_price  INTEGER NOT NULL,
+    order_items  TEXT    NOT NULL
   )`;
-
   try {
-    await dbRun(createTableSql);
+    await dbRun(sql);
     return true;
   } catch (e) {
-    console.error(`Error in createUsersTable: ${e}.`);
+    console.error(`Error in createOrdersTable: ${e}`);
     return false;
   }
 };
 
 const createShoppingCartTable = async () => {
-  // total price in cents
-  const createTableSql = `
-  CREATE TABLE IF NOT EXISTS cart (
-    uid INTEGER UNIQUE NOT NULL,
-    cart_items TEXT NOT NULL
+  const sql = `CREATE TABLE IF NOT EXISTS cart (
+    uid        INTEGER UNIQUE NOT NULL,
+    cart_items TEXT    NOT NULL
   )`;
-
   try {
-    await dbRun(createTableSql);
+    await dbRun(sql);
     return true;
   } catch (e) {
-    console.error(`Error in createShoppingCartTable: ${e}.`);
+    console.error(`Error in createShoppingCartTable: ${e}`);
     return false;
   }
 };
@@ -114,200 +147,151 @@ const createShoppingCartTable = async () => {
     await createOrdersTable();
     await createShoppingCartTable();
   } catch (e) {
-    console.error("Failed to init Tables: ", e);
+    console.error('Failed to init Tables:', e);
   }
 })();
 
+// Data-access functions
 const checkEmailTaken = async (email) => {
-  const query = "select * from users where email = $email";
+  const query = `SELECT * FROM users WHERE email = $email`;
   try {
-    const result = await dbGet(query, { $email: email });
-    if (!result) return { status: "OK" };
-    return { status: "error", message: "The email is already used." };
+    const result = await dbGet(query, { email: email });
+    return result ? { status: 'error', message: 'The email is already used.' } : { status: 'OK' };
   } catch (e) {
     console.error(`Error in checkEmailTaken: ${e}`);
-    return { status: "error", message: e.message };
+    return { status: 'error', message: e.message };
   }
 };
 
-// this function is used for sign up a user.
-// the validation is by middleware
 const createUser = async ({ name, email, password }) => {
-  const insertUserSql = `insert into users (name,email,password) 
-        values (?,?,?)`;
-
+  const sql = `INSERT INTO users (name,email,password) VALUES (?,?,?)`;
   try {
-    const checkEmailResult = await checkEmailTaken(email);
-    if (checkEmailResult.status === "error") return checkEmailResult;
-    const res = await dbRun(insertUserSql, [name, email, password]);
-    return { status: "OK", id: res.lastID, name, email };
+    const check = await checkEmailTaken(email);
+    if (check.status === 'error') return check;
+    const res = await dbRun(sql, [name, email, password]);
+    return { status: 'OK', id: res.lastID, name, email };
   } catch (e) {
-    console.error(`Error in createUser: ${e}.`);
-    return { status: "error", message: "Failed to insert users into table!" };
+    console.error(`Error in createUser: ${e}`);
+    return { status: 'error', message: 'Failed to insert user!' };
   }
 };
-// used for login a user
+
 const checkUser = async ({ email, password }) => {
-  const query = `select * from users where email=$email and password = $password`;
+  const query = `SELECT * FROM users WHERE email=$email AND password=$password`;
   try {
-    const res = await dbGet(query, { $email: email, $password: password });
-    if (!res) return { status: "error", message: "Wrong email or password." };
-
-    const id = res.id;
-    return { status: "OK", id, name: res.name, email };
+    const res = await dbGet(query, { email, password });
+    return res ? { status: 'OK', id: res.id, name: res.name, email } : { status: 'error', message: 'Wrong email or password.' };
   } catch (e) {
-    console.error(`Error in loginUser: ${e}.`);
-    return { status: "error", message: "Failed to login user!" };
+    console.error(`Error in checkUser: ${e}`);
+    return { status: 'error', message: 'Failed to login user!' };
   }
 };
 
-// update user name and password
 const updateUser = async ({ userID, name, password }) => {
-  const query = `update users set name = $name, password = $password where id = $id`;
-  if (!name || !password)
-    return {
-      status: "error",
-      message: "New Name and Password can't be empty.",
-    };
+  if (!name || !password) return { status: 'error', message: "New Name and Password can't be empty." };
+  const query = `UPDATE users SET name=$name, password=$password WHERE id=$id`;
   try {
-    await dbRun(query, { $name: name, $password: password, $id: userID });
-    return {
-      status: "OK",
-      name,
-      message: "User name and password update successfully.",
-    };
+    await dbRun(query, {  name, password, id: userID });
+    return { status: 'OK', message: 'User name and password update successfully.', name };
   } catch (e) {
-    console.error(`Error in updateUser: ${e}.`);
-    return { status: "error", message: "Failed to update user!" };
+    console.error(`Error in updateUser: ${e}`);
+    return { status: 'error', message: 'Failed to update user!' };
   }
 };
 
 const deleteUser = async (email) => {
-  const query = `delete from users where email = $email`;
+  const query = `DELETE FROM users WHERE email=$email`;
   try {
-    const res = await dbRun(query, { $email: email });
-    return { status: "OK", users: res }; // don't check if deleted or not
+    const res = await dbRun(query, {  email });
+    return { status: 'OK', users: res };
   } catch (e) {
-    console.error(`Error in deleteUser: ${e}.`);
-    return { status: "error", message: "Failed to delete user!" };
+    console.error(`Error in deleteUser: ${e}`);
+    return { status: 'error', message: 'Failed to delete user!' };
   }
 };
 
-// this is a test purpose function.
 const getAllUsers = async () => {
-  const query = `select * from users`;
   try {
-    const res = await dbAll(query);
-    return { status: "OK", users: res };
+    const res = await dbAll(`SELECT * FROM users`);
+    return { status: 'OK', users: res };
   } catch (e) {
-    console.error(`Error in getAllUsers: ${e}.`);
-    return { status: "error", message: "Failed to get all users!" };
+    console.error(`Error in getAllUsers: ${e}`);
+    return { status: 'error', message: 'Failed to get all users!' };
   }
 };
 
 const getAllOrders = async () => {
-  const query = `select * from orders`;
   try {
-    const res = await dbAll(query);
-    return { status: "OK", orders: res };
+    const res = await dbAll(`SELECT * FROM orders`);
+    return { status: 'OK', orders: res };
   } catch (e) {
-    console.error(`Error in getAllOrders: ${e}.`);
-    return { status: "error", message: "Failed to get all orders!" };
+    console.error(`Error in getAllOrders: ${e}`);
+    return { status: 'error', message: 'Failed to get all orders!' };
   }
 };
 
 const getOrdersByUser = async ({ userID }) => {
-  const query = `select * from orders where uid = $userID`;
   try {
-    const res = await dbAll(query, { $userID: userID });
-    return { status: "OK", orders: res };
+    const res = await dbAll(`SELECT * FROM orders WHERE uid = $uid`, { uid: userID });
+    return { status: 'OK', orders: res };
   } catch (e) {
-    console.error(`Error in getOrdersByUser: ${e}.`);
-    return { status: "error", message: "Failed to get orders by user!" };
+    console.error(`Error in getOrdersByUser: ${e}`);
+    return { status: 'error', message: 'Failed to get orders by user!' };
   }
 };
 
-//  uid INTEGER NOT NULL,
-//     item_numbers INTEGER NOT NULL,
-//     is_paid INTEGER NOT NULL CHECK (is_paid IN (0, 1)),
-//     is_delivered INTEGER NOT NULL CHECK (is_delivered IN (0, 1)),
-//     total_price INTEGER NOT NULL,
-//     order_items T
-
-// items is an array of object of this format
-// {pid,quantity,price}
 const createOrder = async ({ userID, items }) => {
   const [itemNumber, totalPrice] = items.reduce(
-    (ret, itm) => [
-      ret[0] + itm.quantity,
-      ret[1] + Math.round(itm.quantity * itm.price * 100),
-    ],
+    ([cnt, sum], itm) => [cnt + itm.quantity, sum + Math.round(itm.quantity * itm.price * 100)],
     [0, 0]
   );
   const orderItems = JSON.stringify(items);
-  const insertOrderSql = `insert into orders (uid,item_numbers,total_price,order_items,is_paid,is_delivered) 
-        values (?,?,?,?,?,?)`;
+  const sql = `INSERT INTO orders (uid,item_numbers,total_price,order_items,is_paid,is_delivered)
+    VALUES (?,?,?,?,?,?)`;
   try {
-    const res = await dbRun(insertOrderSql, [
-      userID,
-      itemNumber,
-      totalPrice,
-      orderItems,
-      0,
-      0,
-    ]);
-    return { status: "OK", id: res.lastID };
+    const res = await dbRun(sql, [userID, itemNumber, totalPrice, orderItems, 0, 0]);
+    return { status: 'OK', id: res.lastID };
   } catch (e) {
-    console.error(`Error in createOrder: ${e}.`);
-    return { status: "error", message: "Failed to insert orders table!" };
+    console.error(`Error in createOrder: ${e}`);
+    return { status: 'error', message: 'Failed to insert orders!' };
   }
 };
 
 const updateOrder = async ({ orderID, isPaid, isDelivered }) => {
-  const query = `update orders set is_paid = $isPaid, is_delivered=$isDelivered where id = $orderID`;
+  const query = `UPDATE orders SET is_paid=$isPaid, is_delivered=$isDelivered WHERE id=$orderID`;
   try {
-    const res = await dbRun(query, {
-      $orderID: orderID,
-      $isPaid: isPaid,
-      $isDelivered: isDelivered,
-    });
-    return { status: "OK", result: res };
+    const res = await dbRun(query, { orderID,isPaid, isDelivered });
+    return { status: 'OK', result: res };
   } catch (e) {
-    console.error("updateOrder Error:", e);
-    return { state: "error", message: "update order error" };
+    console.error(`Error in updateOrder: ${e}`);
+    return { status: 'error', message: 'update order error' };
   }
 };
 
 const updateCart = async ({ uid, items }) => {
-  const query = `INSERT INTO cart (uid, cart_items)
-VALUES ($uid, $itemstr)
-ON CONFLICT (uid)
-DO UPDATE SET cart_items = excluded.cart_items;`;
+  const sql = `INSERT INTO cart (uid, cart_items)
+    VALUES ($uid, $itemstr)
+    ON CONFLICT (uid) DO UPDATE SET cart_items=excluded.cart_items`;
   try {
-    const res = await dbRun(query, {
-      $uid: uid,
-      $itemstr: JSON.stringify(items),
-    });
-    return { status: "OK", result: res };
+    const res = await dbRun(sql, {  uid, itemstr: JSON.stringify(items) });
+    return { status: 'OK', result: res };
   } catch (e) {
-    console.error("updateCart Error:", e);
-    return { state: "error", message: "update cart error" + e };
+    console.error(`Error in updateCart: ${e}`);
+    return { status: 'error', message: 'update cart error' };
   }
 };
+
 const getCart = async ({ uid }) => {
-  const query = `select * from cart where uid = $uid`;
   try {
-    const res = await dbGet(query, { $uid: uid });
-    if (!res) return { status: "OK", items: [] };
-    const items = JSON.parse(res.cart_items);
-    return { status: "OK", items };
+    const res = await dbGet(`SELECT * FROM cart WHERE uid=$uid`, {  uid });
+    if (!res) return { status: 'OK', items: [] };
+    return { status: 'OK', items: JSON.parse(res.cart_items) };
   } catch (e) {
-    console.error(`Error in getCart: ${e}.`);
-    return { status: "error", message: "Failed to get cart items!" };
+    console.error(`Error in getCart: ${e}`);
+    return { status: 'error', message: 'Failed to get cart items!' };
   }
 };
-// initTables();
-// dbTest(); // this function is for internal test.
+
 module.exports = {
   createUser,
   checkUser,
@@ -320,4 +304,5 @@ module.exports = {
   updateOrder,
   updateCart,
   getCart,
+  dbTest // export test if you like
 };

@@ -7,6 +7,7 @@
     "test": "cross-env NODE_ENV=test jest --verbose"
   },
   "dependencies": {
+    "better-sqlite3": "^11.9.1",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
@@ -17,12 +18,12 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "~1.9.1",
     "nodemon": "^3.1.0",
-    "sqlite3": "^5.1.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
     "supertest": "^6.3.4"
-  }
+  },
+  "engines": {"node": ">=22"}
 }
