@@ -22,6 +22,14 @@ The purpose of this server is to provide MAD course students with a real-world e
    ```bash
    git clone https://github.com/LarryAtGU/fake-store-server.git
    cd fake-store-server
+
+   node -v
+   ```
+
+   If your node version is 20 or less, then you need to
+
+   ```bash
+   git checkout legacy-sqlite3
    ```
 
 2. **Install Dependencies**: Install the necessary npm packages.
@@ -69,3 +77,8 @@ Students should focus on the client-side development of the `fake-store` app, co
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Node-version compatibility
+
+- **legacy-sqlite3** (branch) — uses `sqlite3`, supports Node ≤ 20
+- **main** (branch) — uses `better-sqlite3`, requires Node ≥ 22
