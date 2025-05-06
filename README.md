@@ -81,4 +81,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## Node-version compatibility
 
 - **legacy-sqlite3** (branch) — uses `sqlite3`, supports Node ≤ 20
-- **main** (branch) — uses `better-sqlite3`, requires Node ≥ 22
+- **main** (branch) — uses `better-sqlite3`, requires Node ≥ 21
