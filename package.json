@@ -24,5 +24,8 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "supertest": "^6.3.4"
+  },
+  "engines": {
+    "node": "<=20"
   }
 }

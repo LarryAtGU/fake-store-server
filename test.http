@@ -1,0 +1,57 @@
+### create a user
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "email": "john8@example.com",
+  "password": "securepassword"
+}
+
+
+### login a user
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "newpassword"
+}
+
+
+### Update user details
+PATCH http://localhost:3000/users/update 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYzk4ODI0NS1jZThkLTQ5MWEtODE0Mi00ZTA2OTdlM2JiYTYiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NDEyMzY3Mzl9.FlhybTUYYtJkv5xN1Ze2vrpUJh9ox7U9b1XqFpb8ZuI
+Content-Type: application/json
+
+{
+"username":"newNamexx",
+"password":"newpassword"  
+}
+
+### Add/Insert user study record
+POST http://localhost:3000/study-record 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYzk4ODI0NS1jZThkLTQ5MWEtODE0Mi00ZTA2OTdlM2JiYTYiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NDEyMzY3Mzl9.FlhybTUYYtJkv5xN1Ze2vrpUJh9ox7U9b1XqFpb8ZuI
+Content-Type: application/json
+
+{
+  "currentLearning": 3,
+  "finishedLearning": 5,
+  "totalScore": 75
+}
+
+### get all study records
+GET http://localhost:3000/study-record 
+Content-Type: application/json
+
+### get study record of a user
+GET http://localhost:3000/study-record?id=bc988245-ce8d-491a-8142-4e0697e3bba6 
+Content-Type: application/json
+
+### get study record of a user use para
+GET http://localhost:3000/study-record/bc988245-ce8d-491a-8142-4e0697e3bba6 
+Content-Type: application/json
+
+### delete a user by id
+DELETE http://localhost:3000/users/bc988245-ce8d-491a-8142-4e0697e3bba6	 
+Content-Type: application/json
