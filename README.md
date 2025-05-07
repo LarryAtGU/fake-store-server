@@ -29,7 +29,7 @@ The purpose of this server is to provide MAD course students with a real-world e
    If your node version is 20 or less, then you need to
 
    ```bash
-   git checkout legacy-sqlite3
+   git checkout remotes/origin/legacy-sqlite3
    ```
 
 2. **Install Dependencies**: Install the necessary npm packages.
