@@ -111,6 +111,15 @@ router.get("/", async function (req, res, next) {
  *         item_numbers:
  *           type: integer
  *           description: The number of items in the order.
+ *         is_paid:
+ *           type: integer
+ *           description: Indicates whether the order has been paid (1) or not (0).
+ *           example: 0
+ *         is_delivered:
+ *           type: integer
+ *           description: Indicates whether the order has been delivered (1) or not (0).
+ *           example: 0
+
  *         total_price:
  *           type: number
  *           description: The total price of the order.
