@@ -1,3 +1,4 @@
+require('dotenv').config()
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -57,7 +58,7 @@ if (process.env.NODE_ENV !== "test") {
   setTimeout(() => {
     console.log(
       "\x1b[32m%s\x1b[0m",
-      "\nFake store server started. Visit http://localhost:3000/ for API documentation.\n"
+      `\nFake store server started. Visit http://localhost:${process.env.PORT || '3000'}/ for API documentation.\n`
     );
   }, 1000);
 }
