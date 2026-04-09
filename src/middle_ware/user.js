@@ -1,4 +1,4 @@
-const { createUser, checkUser, updateUser } = require("../db/index");
+const { createUser, checkUser, updateUser } = require("../db/index-sqlite3");
 
 const isValidPassword = (password) =>
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/g.test(password);

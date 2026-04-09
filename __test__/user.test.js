@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
-const { deleteUser } = require("../src/db/index");
+const { deleteUser } = require("../src/db/index-sqlite3");
 const { verifyToken } = require("../src/service/jsw");
 const testUser = {
   email: "test@test.com",
@@ -106,7 +106,7 @@ describe("User API Endpoints", () => {
     expect(res.body).toHaveProperty("name", newName);
     expect(res.body).toHaveProperty(
       "message",
-      "User name and password update successfully."
+      "User name and password update successfully.",
     );
   });
 
@@ -147,7 +147,7 @@ describe("User API Endpoints", () => {
     expect(res.body).toHaveProperty("status", "error");
     expect(res.body).toHaveProperty(
       "message",
-      "New Name and Password can't be empty."
+      "New Name and Password can't be empty.",
     );
   });
 });

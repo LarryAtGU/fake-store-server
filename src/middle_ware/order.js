@@ -1,4 +1,8 @@
-const { createOrder, getOrdersByUser, updateOrder } = require("../db/index");
+const {
+  createOrder,
+  getOrdersByUser,
+  updateOrder,
+} = require("../db/index-sqlite3");
 
 const createOrderMiddleware = async (req, res, next) => {
   const userID = res.locals.userID;
