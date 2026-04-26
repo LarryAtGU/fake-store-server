@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
-const { deleteUser } = require("../src/db/index-sqlite3");
+const { deleteUser } = require("../src/db");
 const { verifyToken } = require("../src/service/jsw");
 const testUser = {
   email: "test@test.com",

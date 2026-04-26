@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const { getAllUsers } = require("../db/index-sqlite3");
+const { getAllUsers } = require("../db");
 const {
   createUserMiddleware,
   sendResponse,

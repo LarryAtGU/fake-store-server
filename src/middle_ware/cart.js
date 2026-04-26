@@ -1,4 +1,4 @@
-const { updateCart, getCart } = require("../db/index-sqlite3");
+const { updateCart, getCart } = require("../db");
 
 const getCartMiddleware = async (req, res, next) => {
   const userID = res.locals.userID;
