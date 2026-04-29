@@ -1,4 +1,4 @@
-const { generateToken, verifyToken } = require("../service/jsw");
+const { generateToken, verifyToken } = require("../service/jwt");
 
 const auth = async (req, res, next) => {
   const authHeader = req.headers["authorization"]; // case insensitive
