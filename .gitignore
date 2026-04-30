@@ -36,3 +36,6 @@ yarn-error.*
 
 # database
 *.sqlite3
+
+# claude
+.claude/
