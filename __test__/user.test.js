@@ -1,7 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
 const { deleteUser } = require("../src/db");
-const { verifyToken } = require("../src/service/jsw");
+const { verifyToken } = require("../src/service/jwt");
 const testUser = {
   email: "test@test.com",
   name: "Test User",
