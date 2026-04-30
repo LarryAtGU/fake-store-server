@@ -172,8 +172,8 @@ const { getFakeStoreData } = require("../db/fakeStoreData");
  *                 - $ref: '#/components/schemas/NotFound'
  */
 
-router.get("/*", (req, res, next) => {
-  const path = req.params[0] ? "products/" + req.params[0] : "products";
+router.get("/{*splat}", (req, res, next) => {
+  const path = req.params.splat ? "products/" + req.params.splat : "products";
   const data = getFakeStoreData(path) || { error: "nodata", path };
 
   setTimeout(() => {
