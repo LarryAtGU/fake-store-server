@@ -173,7 +173,11 @@ const { getFakeStoreData } = require("../db/fakeStoreData");
  */
 
 router.get("/{*splat}", (req, res, next) => {
-  const path = req.params.splat ? "products/" + req.params.splat : "products";
+  const splat = req.params.splat;
+
+  const productPath = Array.isArray(splat) ? splat.join("/") : splat;
+
+  const path = productPath ? "products/" + productPath : "products";
   const data = getFakeStoreData(path) || { error: "nodata", path };
 
   setTimeout(() => {
